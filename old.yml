@@ -1,0 +1,63 @@
+version: '3'
+
+services:
+  nginx-proxy:
+    container_name: proxy
+    image: jwilder/nginx-proxy
+    restart: always
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - /var/run/docker.sock:/tmp/docker.sock:ro
+      - certs:/etc/nginx/certs:ro
+      - vhostd:/etc/ngnix/vhost.d
+      - html:/usr/share/nginx/html
+    labels:
+      - com.github.jrcs.letsencrypt_nginx_proxy_companion.nginx_proxy
+
+  letsencrypt:
+    container_name: letsencrypt
+    image: jrcs/letsencrypt-nginx-proxy-companion
+    restart: always
+    environment:
+      DEFAULT_EMAIL: salvadorgalindocomas@gmail.com
+      NGINX_PROXY_CONTAINER: nginx-proxy
+    volumes:
+      - certs:/etc/nginx/certs:rw
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - certs:/etc/nginx/certs:rw
+      - vhostd:/etc/nginx/vhost.d
+      - html:/usr/share/nginx/html
+
+  wordpress:
+    container_name: wordpress
+    image: wordpress
+    restart: always
+    expose:
+      - 80
+    environment:
+      WORDPRESS_DB_HOST: db
+      WORDPRESS_DB_USER: salvagalindo
+      WORDPRESS_DB_PASSWORD: Sagaco2448
+      WORDPRESS_DB_NAME: emergenciasdb
+      VIRTUAL_HOST: emergencias.store,www.emergencias.store
+      LETSENCRYPT_HOST: emergencias.store,www.emergencias.store
+    volumes:
+      - wordpress:/var/www/html
+
+  db:
+    container_name: mysql
+    image: mysql:5.7
+    restart: always
+    environment:
+      MYSQL_DATABASE: emergenciasdb
+      MYSQL_USER: salvagalindo
+      MYSQL_PASSWORD: Sagaco2448
+      MYSQL_RANDOM_ROOT_PASSWORD: '1'
+    volumes:
+      - db:/var/lib/mysql
+
+volumes:
+  wordpress: 
+  db:
